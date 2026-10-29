@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#242038">
+<title>にゃんこ大戦争 真レジェンドクエストサポート</title>
+<style>
+:root{--bg:#f5f4fa;--card:#fff;--ink:#242038;--muted:#686579;--accent:#6750a4;--accent2:#eee8ff;--danger:#b3261e;--line:#e4e1ed;--green:#217346}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}
+header{background:var(--ink);color:#fff;padding:18px 16px 15px}header h1{font-size:1.15rem;margin:0 0 5px}header p{font-size:.82rem;margin:0;color:#d8d4e8}
+main{max-width:900px;margin:auto;padding:14px;display:grid;gap:14px}
+nav{display:flex;gap:8px;flex-wrap:wrap}.tab,button{border:0;border-radius:12px;padding:11px 14px;font-weight:700;font-size:.95rem;cursor:pointer}
+.tab{background:#e9e6f2;color:var(--ink)}.tab.active,button.primary{background:var(--accent);color:white}button.secondary{background:var(--accent2);color:var(--ink)}button.danger{background:#fbe9e7;color:var(--danger)}button:disabled{opacity:.4;cursor:not-allowed}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 2px 8px #211a3908}
+h2{font-size:1.08rem;margin:0 0 12px}h3{font-size:.95rem;margin:16px 0 8px}.muted{color:var(--muted);font-size:.86rem}.summary{display:flex;gap:8px;flex-wrap:wrap}.pill{background:var(--accent2);padding:7px 10px;border-radius:10px;font-weight:700;font-size:.9rem}
+.stage-list{display:grid;gap:8px}.stage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;background:#fff;color:var(--ink);width:100%}.stage-row.current{border:2px solid var(--accent);background:#faf8ff}.stage-row .name{font-weight:750}.stage-row .detail{font-size:.78rem;color:var(--muted);margin-top:3px}.stage-row .right{text-align:right;white-space:nowrap;font-size:.82rem}
+.hidden{display:none!important}.big{font-size:1.3rem;font-weight:800;margin:4px 0 14px}.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{background:#f8f7fc;border-radius:12px;padding:12px}.stat .label{font-size:.78rem;color:var(--muted)}.stat .value{font-size:1.08rem;font-weight:800;margin-top:3px}
+.slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.slot{border:1px solid var(--line);border-radius:10px;padding:10px 4px;text-align:center;background:#faf9fc;min-height:72px}.slot.changed{background:#fff0cc;border-color:#d89a17}.slot .num{font-size:.78rem;color:var(--muted)}.slot .symbol{font-size:1.2rem;font-weight:900}.slot .char{font-size:.72rem;overflow-wrap:anywhere;margin-top:4px}
+.assignments{display:grid;gap:6px}.assignment{padding:9px 10px;background:#f8f7fc;border-radius:9px;font-size:.9rem}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:100px}
+.notice{background:#fff5d9;border:1px solid #f0d58c;padding:12px;border-radius:12px;font-size:.88rem}.success{background:#e8f5ec;border-color:#b8dfc2}
+textarea,input,select{font:inherit;width:100%;padding:10px;border:1px solid #cfcbdc;border-radius:10px;background:white;color:var(--ink)}textarea{min-height:140px}.formrow{display:grid;gap:8px;margin:10px 0}.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rarity-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.rarity-tab{border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px 10px;color:var(--ink);cursor:pointer}.rarity-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}.char-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.char-tile{min-width:0;min-height:76px;border:1px solid var(--line);border-radius:9px;background:#f8f7fc;padding:8px 4px;text-align:center;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px}.char-tile.owned{background:#e7f5e9;border:2px solid #389451}.char-name{font-size:.72rem;line-height:1.25;overflow-wrap:anywhere}.char-rarity{font-size:.62rem;color:var(--muted)}
+footer{max-width:900px;margin:auto;padding:0 14px 24px;color:var(--muted);font-size:.78rem}
+@media(min-width:700px){main{grid-template-columns:1fr;align-items:start}#listView,#detailView,#settingsView{grid-column:1}.slots{gap:9px}}
+</style>
+</head>
+<body>
+<header><h1>にゃんこ大戦争 真レジェンドクエストサポート</h1><p>ステージ進行・編成枠抽選・👑使用数を管理するツール</p></header>
+<main>
+<nav style="grid-column:1/-1">
+<button class="tab active" data-view="listView">ステージ一覧</button>
+<button class="tab" data-view="charactersView">キャラクター図鑑</button>
+<button class="tab" data-view="settingsView">データ・保存</button>
+</nav>
+<section class="card" id="detailView">
+<div id="detailEmpty"><h2>ステージを選択</h2><p class="muted">一覧から挑戦中のステージを選んでください。</p></div>
+<div id="detailContent" class="hidden">
+<div class="muted" id="stageStatus"></div>
+<div class="big" id="stageTitle"></div>
+<div class="statgrid">
+<div class="stat"><div class="label">次の挑戦に必要な👑</div><div class="value" id="nextCost"></div></div>
+<div class="stat"><div class="label">全ステージの累計使用👑数</div><div class="value" id="detailGlobal"></div></div>
+</div>
+<div class="notice" id="rosterWarning" style="margin-top:12px">キャラクターがまだ登録されていません。登録すると、変更枠にランダムで割り当てられます。<div class="actions"><button class="secondary" id="goRosterBtn" type="button">キャラクター登録へ</button></div></div>
+<div class="actions"><button class="primary" id="randomBtn">ランダム</button><button class="danger" id="loseBtn">敗北</button><button class="secondary" id="clearBtn">勝利</button></div>
+<div id="drawArea" class="hidden">
+<h3>変更枠</h3><div class="muted" id="changedCount" style="margin-bottom:8px"></div>
+<div class="slots" id="slotGrid"></div>
+<h3>変更指示</h3><div class="assignments" id="assignments"></div>
+</div>
+<div class="notice success hidden" id="clearedNotice" style="margin-top:12px">このステージはクリア済みです。</div>
+</div>
+</section>
+<section class="card" id="listView">
+<h2>ステージ一覧</h2>
+<div class="summary" style="margin-bottom:12px"><span class="pill" id="globalSpent">👑 全ステージ累計：0個</span></div>
+<div class="muted" style="margin-bottom:12px">挑戦中のステージを先頭に表示し、その下にクリア済みステージを番号順で表示します。</div>
+<div class="stage-list" id="stageList"></div>
+</section>
+<section class="card hidden" id="charactersView">
+<h2>キャラクター図鑑</h2>
+<p class="muted">レアリティ別に切り替え、各ページ24体（横6列×縦4行）で表示します。枠を押すと所持状態を切り替えます。</p>
+<div><input id="charSearch" placeholder="キャラクター名で検索" style="width:100%;box-sizing:border-box"></div>
+<div class="rarity-tabs" id="rarityTabs"><button type="button" class="rarity-tab active" data-rarity="基本">基本</button><button type="button" class="rarity-tab" data-rarity="EX">EX</button><button type="button" class="rarity-tab" data-rarity="レア">レア</button><button type="button" class="rarity-tab" data-rarity="激レア">激レア</button><button type="button" class="rarity-tab" data-rarity="超激レア">超激レア</button><button type="button" class="rarity-tab" data-rarity="伝説レア">伝説レア</button></div>
+<div class="summary" style="margin-bottom:10px"><span class="pill" id="ownedCount">所持 0 / 0</span><button class="secondary" id="selectPageBtn" type="button">このページをすべて所持</button><button class="secondary" id="clearPageBtn" type="button">このページをすべて未所持</button></div>
+<div id="charGrid" class="char-grid"></div>
+<div class="actions"><button class="secondary" id="prevCharsBtn" type="button">← 前のページ</button><span class="pill" id="charPageLabel">1 / 1</span><button class="secondary" id="nextCharsBtn" type="button">次のページ →</button></div>
+</section>
+<section class="card hidden" id="settingsView">
+<h2>データ・保存</h2>
+<p class="muted">このブラウザ内に自動保存されます。別の端末に移す場合は、セーブデータをJSONファイルに書き出し、移動先で読み込んでください。</p>
+<h3>キャラクター登録（仮）</h3>
+<p class="muted">1行に1キャラクター名を入力してください。所持しているキャラクターだけを登録します。同じキャラクターを複数行に登録すると、抽選されやすくなります。正式な画像付きキャラクター一覧・レアリティ別の個別選択は次の段階で追加します。</p>
+<textarea id="rosterText" placeholder="ネコ&#10;タンクネコ&#10;バトルネコ"></textarea>
+<div class="actions"><button class="primary" id="saveRosterBtn">キャラクター登録を保存</button></div>
+<h3>セーブデータ</h3>
+<div class="file-actions"><button class="primary" id="exportBtn">セーブデータを書き出す</button><button class="secondary" id="importBtn">セーブデータを読み込む</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div>
+<h3>進行データをリセット</h3>
+<p class="muted">ステージ進行・👑集計・抽選結果を初期状態に戻します。キャラクター登録と敵構成候補は残します。</p>
+<button class="danger" id="resetBtn">進行データをリセット</button>
+<div class="notice" style="margin-top:14px">注意：ブラウザのデータを削除すると、端末内の自動保存が消える場合があります。定期的にセーブデータを書き出してください。</div>
+</section>
+</main>
+<footer>試作版：ブラウザ内に自動保存されます。別端末との自動同期は行いません。端末を移す場合はセーブデータを書き出して読み込んでください。</footer>
+<script>
+const MAP_TEXT = `
+真・伝説のはじまり|古代の呪い
+まんぷく秘境|ピラフ大草原|ニャンダルメシアン|アンニン峠|アヒージョ高原|パスタ砂丘|ルーロウ丘陵
+アドベン大森林|コサ民遺跡|デンジロー海原|山賊かぶれ|くりくりくぼみ|スリルの談笑|ジャン・グール
+じゃぶじゃぶ旧海道|マリネタウン|さすらいのホラガイ|パルカッチョ海溝|ウツボボ海底火山|暁フロンターレ|ルツボー渦
+ワンワン湾|ビッチビチ漁場|反抗的経済水域|カマトロ防波堤|怪獣ショー岩窟|タツノコ浜|イカス岬
+深淵を覗く者|ガチガチ暗黒兵器|かわいい壁画|サンシャイン洞窟|鍾乳石イルミネーション|ゲッソリ性悪説|まったり地底湖
+デスメガシティ|リコピンの夜更け|メトロポリスオアシス|はりぼて摩天楼|ならず者の黄昏|コンクリートオーシャン|無人駅の決闘
+無法地帯のオキテ|イグサ塔|カウガール監獄|N.G.牧場|ハンチング山|ビクビク高原|デッドリボルバー渓谷
+パラリラ半島|シロマグロ海岸|究極兵器トド|ドジョウ破り|ウミネコ湾岸|べろべろ沼|おれおれサギ
+キャットクーデター|コオロギイデオロギー|穴ぐらの最高権力者|人民とにんじん|密告者軍団|亡命前夜の奇襲|レッドキャット作戦
+桜んぼ島|溶岩温浴|音速火砕流|灰の雨、愛のため|頂の大賢者|暴虐カルデラ|スーパーボルケーノ
+魂底からの帰化|へんな讃美歌|練乳修洞窟の乙女|良いノリの祈り|ルサンチマンの森|おしゃべり世捨て人|原始に宿る魂
+絶滅海洋タウン|イワロック岩礁|オウム貝の墓場|海より還りし亡者|人面魚の渚|らくだ岸壁|視界なき死海
+島流しリゾート|贖罪バカンス|プライベート熱帯雨林|無礼講ナイトビーチ|１３番ホールの住人|昇天スパマッサージ|ホテル花鳥風月
+まどいの魔道路|毛皮をかき揚げて|マーメイドのあんかけ|帝王の教室|バタバタ大黒柱|潔癖症の番人|絶対近視区域
+天界バル横丁|胸騒ぎ玄関|ごろ寝廊下|酔いどれリビング|きちんとキッチン|まちぶせ風呂|子羊の寝室
+バトル銭湯|有限会社湯気|粘り気シャワー|立ちっぱなしサウナ|冷徹水風呂|海坊主の家|デカ番台
+はえぬき三連山|枯れた集落|深爪を負った夜|がらんどうの岩肌|過言の滝|落とされた欲と垢|本能に従順な山伏
+マリン官邸|なぎさの猛攻|不殺の釣り堀|トリトンの洞穴|いさりびヘッド|ブラッディ波止場|マルチテトラポッド
+学園に巣くう悪意|学園紛争遺跡|一匹しかいない水槽|購買部を牛耳る鬼|校長先生の反逆|鐘のマークを集めし者|校則と罰則
+ところてん金鉱|毛深き坑道|楽しい強制労働|ガス吸う鳥|星々を映す地下水|大崩落パニック|スコップ一つに賭す命
+酩酊製鉄所|プロレタリアの箱|倒れてないか見る仕事|不動のコンベア|VIP倉庫|反乱スクラップ|天へと昇る煙突
+暴かれし神殿の秘宝|魔犬の遠吠え|犬も歩けばボーン|転んだ先の毒沼|石の上に三分|乗りかかった泥船|ミイラトリガーミイラ
+帝政エイジャナイカ|権力と万有引力|エナジー奴隷|民の手の松明|アットホーム恐怖政治|無断呼吸禁止法|玉座に牙むく群衆
+鋼鉄スポーツジム|人力ルームランナー|倍返しサンドバッグ|プロテイン粉末吸引|無酸素エアロバイク|逆立ちサウナ|レイクサイドブートキャンプ
+明星おきの島|カレー彗星|イカロスの本能|虹の橋の通行料|プラネタリウムラブ|流星大踊り|星座になったネコども
+眠れる森の何か|王子様の出てくる森|歌うま姫の家|邪悪な美魔女の城|ガラスの靴下|仮面武道会|幸せに暮らしました
+ラボラ・トリ島|フラスコ岳|人体模型林|ホルマリンマリーナ|知識に溺れる者の沼|プレパラートの橋|炎上する青
+忘らるる墓所|眠りの洞穴|こぢんまり故人|死者のセカンドライフ|荒らされた墓石|ボタニカル埋葬|骨身にしみる水
+始まりを告げる朝|忠誠の祈り|生誕のジレンマ|白の神託|ペルソナの芽生え|リビドーの解放|深層に眠る偽善
+ハッピーラッキー寺院|煽ってくる巡礼者|大遅刻プリースト|コーラスラップバトル|冒険の書に記録|転送型チャペル|邪神様のお告げ
+キネマ怪館|らせん状リング|13日の給料日|ノーマル・アクティビティ|ほんのり黒い家|冷静スクリーム|はらわたの史料室
+ダイバー都市|多様性とアルカリ性|砂鉄海浜公園|油の虹|恋愛コンビナート|夜景残業問題|ブラウン管のインフルエンサー
+ナシゴ・レン|アンコールS.W.A.T|熱帯チョコバナナ園|クアラルン池|ポイズンチキンライス|燃えるカオマンガイ|魚足魅惑のマーメイド
+DNA果樹園|ゲノムバナナ狩り|偽いちごハウス|無農薬で造った染色体|食べごろナノぶどう|クローン農夫|遺伝子情報直売所
+古代樹の迷宮|蔦に閉ざされた扉|輪廻を表す年輪|レ・リーフの双塔|樹冠の祭壇|樹液の湧き出る地下道|神の面を賜りし者
+立ちはだかる者達の城|気高き暴君との対決|天変地異の局面|極悪三兄弟とのデュエル|寸止め打撃対戦|あの世とこの世の境界線|四皇帝の殿堂
+時空のゆがみ|大脱獄|赤いきつねの愚者|おぼえたての悪|ウニデーモンスタジオ|太古の魔力|サタンオールスターズ
+大厄災のはじまり|悪魔城の封印
+魔海域ビックラ港|ポンポン船の墓場|壮絶な荒波|とれたて干物市|防波堤の血戦|漁業組合の反乱|網にかかりしオトシゴ
+デッドヒートランド|マグマシャフト|焼ける赤土|血の池沸騰|ヘルズクレーター|火の国ダイ=ナマイト|たそがれに燃える丘
+バラ色の袋小路|モノ言わぬ舌|ランプを手にした群衆|一寸先は炭|権力者の隠れミノ|晩餐の館|焼肉焼いても街焼くな
+千年獣の霊峰|霧散した記憶の泉|無秩序な鼓動|霞む視界の先には|隣り合う冥土|銀色清流|天寿を授ける頂
+ムーディストビーチ|星降るウイスキーグラス|ボッタクリにむせぶ夜|急がないで傍にいて～慕情～|涙にぬれた子犬よ|忍び遭い|いにしえ深海ブルース
+猫追いしふるさと|竪穴式校舎|収穫量を占う地方放送|火焔型土器でおふくろの味|豪族の集う喫煙所|生贄探して道の駅|おらこんな故郷出るだ
+海賊王商店街|理容ものの毛|スタンバイ民宿|アベン・ジャズ喫茶|ばたり庵|タイタ肉屋|イン・デペンデンス亭
+真なる虚実を紡ぐ道|ピリオド大渓谷|暗い魔窟の主|斜陽の警告|インフィニ峠|エターナル古森林|はじまりへ続く足跡
+人類ネコ化計画|偶像に宿る魂|名誉一つに賭す命|虚栄の冠を賜りし者|永久を授ける頂|原罪を贖いし時|古代を統べる猿人|逆襲の大猿人|真人類創生
+古代神樹|起源の覚醒
+`;
+const maps = MAP_TEXT.trim().split('\n').map(line=>{const p=line.split('|');return {name:p[0],stages:p.slice(1)}}).filter(m=>m.name);
+const regularStages = Array.from({length:47},(_,i)=>({id:i+1,label:`LEVEL ${i+1}`,candidates:[...(maps[i]?.stages||[]),...(maps[i+1]?.stages||[])]}));
+regularStages.push({id:48,label:"LEVEL FINAL",candidates:maps[maps.length-1]?.stages||["起源の覚醒"]});
+const STORAGE_KEY="nyankoRandomSupport_v1";
+const INITIAL_CHAR_TEXT = `0	基本	ネコモヒカン
+1	基本	ゴムネコ
+2	基本	暗黒ネコ
+3	基本	ムキあしネコ
+4	基本	ネコライオン
+5	基本	天空のネコ
+6	基本	ネコ島
+7	基本	ネコキングドラゴン
+8	基本	ネコジャラミ
+9	基本	真ネコ超人
+10	EX	ネコ忍者
+11	EX	スモウネコ
+12	EX	ネコざむらい
+13	EX	ネコゾンビ
+14	EX	ネコの箱詰め
+15	EX	ネコフィーバー
+16	EX	猫縛り
+17	EX	女王猫
+18	EX	カンフーにゃんこ
+19	EX	ネコ女優
+20	EX	イチリンリン
+21	EX	ネコスカート
+22	EX	ネコパンツ
+23	EX	Mr.
+24	EX	ヴァルヴァルにゃんこ
+25	EX	スーパースターもねこ
+26	EX	狂乱のスターもねこ
+27	EX	ネコボンバー
+28	EX	ネコまねき・寿
+29	EX	記念ネコビルダー
+30	EX	ねこカブ農家
+31	EX	キングネコカーメン
+32	EX	ゴールデンオオカブトネコ
+33	EX	キングクワガタネコ
+34	EX	1億ドルのネコ
+35	EX	爆竹ネコビルダー
+36	EX	彼女にゃん子
+37	EX	鉄仮面ネコライオン
+38	EX	ネコクバンチョウ
+39	EX	裏ネコ委員長
+40	EX	ギャルネコ
+41	EX	石の上にも10年ネコ像
+42	EX	ネコメダル大王
+43	EX	武将ネコ
+44	EX	ネコビジネスパートナー
+45	EX	レッドにゃんこ
+46	EX	ブルーにゃんこ
+47	EX	イエローにゃんこ
+48	EX	グリーンにゃんこ
+49	EX	モモにゃんこ
+50	EX	シルバーにゃんこ
+51	EX	ゴールドにゃんこ
+52	EX	ネコ花婿
+53	EX	ネコはにわ
+54	EX	ネコソシスト
+55	EX	ネコサボテン
+56	EX	アーマードホタルネコ
+57	EX	ネコスーパーカー
+58	EX	ネコヒットマン
+59	EX	ネコピエロ
+60	EX	ネコアックマ
+61	EX	ネコシシマイ
+62	EX	ネコ花嫁
+63	EX	ネコホタテ
+64	EX	ネコ成金
+65	EX	アサルトザリガニネコ
+66	EX	ちびネコ
+67	EX	ちびタンクネコ
+68	EX	ちびバトルネコ
+69	EX	ちびキモネコ
+70	EX	ちびウシネコ
+71	EX	ちびネコノトリ
+72	EX	ちびネコフィッシュ
+73	EX	ちびネコトカゲ
+74	EX	ちび巨神ネコ
+75	EX	ネコヴァルキリー
+76	EX	覚醒のネコムート
+77	EX	激・神さま
+78	EX	フィリバスターX
+79	EX	破壊神ジャガンドーJr
+80	EX	覚醒のタマとウルルン
+81	EX	覚醒のネコニャンダム
+82	EX	覚醒ラブずきんミーニャ
+83	EX	覚醒 宮木武蔵
+84	EX	ぶんぶんネコライダーL
+85	EX	イディ:NX
+86	EX	覚醒戦士ドグえもん
+87	EX	覚醒のミケとウルス
+88	EX	覚醒ネコ神面ドロン
+89	EX	覚醒古獣ナーラ
+90	EX	猿人ネコルーザ
+91	EX	生命の賢者ネコノーヴァ
+92	EX	謎の賢者ネコラティス
+93	EX	理の賢者ニャトーン
+94	EX	淘の賢者ニャーヴィン
+95	EX	仮面のネコ仙人
+96	EX	ネコ神面のウララー
+97	EX	ネコ神面のウリル
+98	レア	ネコ棒倒し
+99	レア	ネコ火祭り
+100	レア	フィッシュ・ド・ノエル
+101	レア	にゃんこ囚人
+102	レア	ネコ紳士同盟
+103	レア	ニャラジン
+104	レア	サホリ
+105	レア	キスヨリ・ス・ゴイ
+106	レア	マダム・ザ・サバンナ
+107	レア	コールセンターのＯＬ
+108	レア	凧にゃん
+109	レア	剛拳にゃんこＧ
+110	レア	キモマロにゃん
+111	レア	にゃんこカートP
+112	レア	ネコバカ兄弟S
+113	レア	死神ネコ
+114	レア	ネコプレゼント
+115	レア	ネコ舞踊ゴージャス
+116	レア	ネコ給食当番
+117	レア	ネコエッグ３
+118	レア	ネコなめ
+119	レア	改心のネコ
+120	レア	真・殺意のタンクネコ
+121	レア	真・殺意のキモネコ
+122	レア	真・殺意のウシネコノトリ
+123	レア	ネコクイズ王
+124	レア	駆動戦士ネコ
+125	レア	ネコ蕎麦屋
+126	レア	ネコチャッピー
+127	レア	ねこグルグルフープ
+128	レア	ネコぺったん
+129	レア	ネコカメカー
+130	レア	ネコカレー
+131	レア	クリスタルネコビルダー
+132	レア	ネコバケーション
+133	レア	未来ネコ
+134	レア	アイアンにゃん
+135	レア	ネコナーガ
+136	レア	ネコゼリーまんじゅう
+137	レア	ネコ近衛兵
+138	レア	ネコックマンケン
+139	レア	ニャッハー
+140	レア	ネコバブル
+141	レア	ネコフライングチキン
+142	レア	ごろにゃーん
+143	レア	にゃんこ研究家
+144	レア	ネコブラスバンド
+145	レア	ネコ茶道
+146	レア	ネコ宮金次郎
+147	レア	にゃんコーン
+148	レア	ネコドッジボウラー
+149	レア	ネコラッパー
+150	レア	ネコセール
+151	レア	飛脚ネコ
+152	レア	ネコターさん
+153	レア	ネコガスマスク
+154	レア	ネコオペ
+155	レア	ネコスマッシュ
+156	レア	ネコキノコ
+157	レア	ネコ村長
+158	レア	ネコバレル
+159	レア	ネコファーマー
+160	レア	ネコタマ号
+161	激レア	大狂乱のネコモヒカン
+162	激レア	大狂乱のゴムネコ
+163	激レア	大狂乱の暗黒ネコ
+164	激レア	大狂乱のムキあしネコ
+165	激レア	大狂乱のネコライオン
+166	激レア	大狂乱の天空のネコ
+167	激レア	大狂乱のネコ島
+168	激レア	大狂乱のネコキングドラゴン
+169	激レア	大狂乱のネコジャラミ
+170	激レア	ネコタイムマシン
+171	激レア	ネコあらし
+172	激レア	ネコエクスプレス
+173	激レア	ネコゴルファー
+174	激レア	にゃんこそば
+175	激レア	ネコウォッシュ
+176	激レア	ネコポリス
+177	超激レア	超グレートニャンコオーDX`;
+const defaultState=()=>({roster:[],characters:null,stages:{},current:1,globalSpent:0});
+let state=loadState(), selectedId=null;
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(s&&s.stages){const out=Object.assign(defaultState(),s);if(!Array.isArray(out.characters))out.characters=null;return out}return defaultState()}catch(e){return defaultState()}}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function stageState(id){if(!state.stages[id])state.stages[id]={attempt:1,cleared:false,spent:0,enemy:null,draw:null};return state.stages[id]}
+function cost(id,attempt){return id<=40?Math.min(attempt,4):Math.min(attempt+1,5)}
+const probs={
+1:[[9,30],[8,32],[7,14],[6,6],[5,6],[4,4],[3,4],[2,2],[1,2]],
+2:[[7,27],[6,37],[5,16],[4,6],[3,6],[2,4],[1,4]],
+3:[[5,25],[4,45],[3,18],[2,6],[1,6]],
+4:[[3,40],[2,50],[1,10]],
+5:[[2,32],[1,45],[0,23]]
+};
+function weighted(list){let r=Math.random()*list.reduce((s,x)=>s+x[1],0);for(const [v,w] of list){r-=w;if(r<0)return v}return list[list.length-1][0]}
+function currentProb(attempt){return probs[Math.min(attempt,5)]}
+function randomItem(a){return a[Math.floor(Math.random()*a.length)]}
+function getEnemy(st){if(!st.enemy){const s=regularStages.find(x=>x.id===selectedId);st.enemy=randomItem(s?.candidates?.length?s.candidates:["候補未登録"])}return st.enemy}
+function getStageLabel(id){return id===48?"LEVEL FINAL":`LEVEL ${id}`}
+function chapterForStage(stageName){const map=maps.find(m=>m.stages.includes(stageName));return map?.name||"章名未登録"}
+function titleFor(id,st){const enemy=st.enemy||"未抽選";return `${getStageLabel(id)}-${enemy}-${chapterForStage(enemy)}`}
+function currentStageId(){for(let i=1;i<=48;i++){const s=stageState(i);if(!s.cleared)return i}return null}
+function ensureEnemy(id){const st=stageState(id);if(!st.enemy){const s=regularStages.find(x=>x.id===id);st.enemy=randomItem(s.candidates.length?s.candidates:["候補未登録"]);save()}return st}
+function renderList(){
+ const cur=currentStageId();state.current=cur||48;document.getElementById("globalSpent").textContent=`👑 全ステージ累計：${state.globalSpent||0}個`;
+ const list=document.getElementById("stageList");list.innerHTML="";
+ const ids=[];if(cur!==null)ids.push(cur);for(let i=1;i<=48;i++)if(stageState(i).cleared)ids.push(i);
+ const unique=[...new Set(ids)].sort((a,b)=>a===cur?-1:b===cur?1:a-b);
+ unique.forEach(id=>{const st=ensureEnemy(id);const b=document.createElement("button");b.className="stage-row"+(id===cur?" current":"");b.innerHTML=`<div><div class="name">${escapeHtml(titleFor(id,st))}</div><div class="detail">${st.cleared?`クリア済み・${st.attempt}回挑戦`:`挑戦中・${st.attempt}回目`}</div></div><div class="right">${st.cleared?"クリア":`次の👑 ${cost(id,st.attempt)}個`}</div>`;b.onclick=()=>{selectedId=id;renderDetail();document.querySelectorAll(".stage-row").forEach(x=>x.classList.remove("selected"))};list.appendChild(b)});
+ if(cur===null){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden")}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderDetail(){
+ const id=selectedId;if(!id){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden");return}
+ const st=ensureEnemy(id);document.getElementById("detailEmpty").classList.add("hidden");document.getElementById("detailContent").classList.remove("hidden");
+ document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
+ document.getElementById("stageTitle").textContent=titleFor(id,st);
+ document.getElementById("nextCost").textContent=st.cleared?"—":`${cost(id,st.attempt)}個`;
+ document.getElementById("detailGlobal").textContent=`${state.globalSpent||0}個`;
+ document.getElementById("rosterWarning").classList.toggle("hidden",state.roster.length>0);
+ document.getElementById("randomBtn").disabled=st.cleared;
+ document.getElementById("loseBtn").disabled=st.cleared;
+ document.getElementById("clearBtn").disabled=st.cleared;
+ document.getElementById("clearedNotice").classList.toggle("hidden",!st.cleared);
+ document.getElementById("drawArea").classList.toggle("hidden",!st.draw);
+ if(st.draw)renderDraw(st.draw);
+}
+function renderDraw(draw){
+ document.getElementById("changedCount").textContent=`変更枠数：${draw.count}枠`;
+ const grid=document.getElementById("slotGrid");grid.innerHTML="";
+ for(let i=1;i<=10;i++){const ch=draw.assignments[i];const d=document.createElement("div");d.className="slot"+(ch?" changed":"");d.innerHTML=`<div class="num">${i}枠目</div><div class="symbol">${ch?"🔄":"－"}</div><div class="char">${ch?escapeHtml(ch):"変更なし"}</div>`;grid.appendChild(d)}
+ const a=document.getElementById("assignments");a.innerHTML="";
+ const changed=Object.keys(draw.assignments).map(Number).filter(n=>draw.assignments[n]).sort((x,y)=>x-y);
+ if(!changed.length){a.innerHTML='<div class="assignment">今回は変更なし</div>';return}
+ changed.forEach(n=>{const d=document.createElement("div");d.className="assignment";d.textContent=`${n}枠目 → ${draw.assignments[n]}`;a.appendChild(d)})
+}
+document.getElementById("randomBtn").onclick=()=>{
+ const id=selectedId,st=stageState(id);if(st.cleared)return;
+ if(!state.roster.length){alert("キャラクターが登録されていません。キャラクター登録画面へ移動します。");showView("settingsView");document.getElementById("rosterText").focus();return}
+ const uniqueRoster=[...new Set(state.roster)];
+ if(!st.draw){const count=Math.min(weighted(currentProb(st.attempt)),uniqueRoster.length);st.draw={count,assignments:{}}}
+ const count=Math.min(st.draw.count,uniqueRoster.length),slots=Array.from({length:10},(_,i)=>i+1);
+ for(let i=slots.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[slots[i],slots[j]]=[slots[j],slots[i]]}
+ const chosen=slots.slice(0,count),pool=[...uniqueRoster];
+ for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+ const assignments={};chosen.forEach((n,i)=>assignments[n]=pool[i]);
+ st.draw={count,assignments};save();renderDetail()
+};
+document.getElementById("loseBtn").onclick=()=>{
+ const id=selectedId,st=stageState(id);if(st.cleared)return;
+ if(!confirm("この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。"))return;
+ const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.attempt++;st.draw=null;save();renderList();renderDetail()
+};
+document.getElementById("clearBtn").onclick=()=>{
+ const id=selectedId,st=stageState(id);if(st.cleared)return;
+ if(!confirm("このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算します。"))return;
+ const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.cleared=true;st.draw=null;save();const next=currentStageId();selectedId=next||id;renderList();renderDetail()
+};
+let charPage=0;
+function parseCharacterLines(text){return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split("\t").map(x=>x.trim()).filter(Boolean);if(parts.length<3)return null;const m=parts[0].match(/^(\d+)(?:[-_](\d+))?$/);if(!m)return null;return {id:Number(m[1]),form:m[2]||"",rarity:parts[1],name:parts.slice(2).join(" ").trim(),owned:false,image:""}}).filter(c=>c&&c.name)}
+function ensureCharacters(){
+ const catalogVersion="2026-10-29-user-roster-2";
+ // Always merge the built-in catalog with saved data so a save/import from an older
+ // version cannot accidentally hide newly registered characters (including Basic).
+ const previous=Array.isArray(state.characters)?state.characters:[];
+ const byName=new Map(previous.map(c=>[c.name,c]));
+ const oldRoster=Array.isArray(state.roster)?state.roster:[];
+ const catalog=parseCharacterLines(INITIAL_CHAR_TEXT);
+ const catalogNames=new Set(catalog.map(c=>c.name));
+ const merged=catalog.map(c=>{const old=byName.get(c.name);return {...c,owned:old?!!old.owned:oldRoster.includes(c.name),image:old?.image||""}});
+ // Preserve any custom names that may have been entered manually in an older version.
+ previous.filter(c=>c&&c.name&&!catalogNames.has(c.name)).forEach(c=>merged.push(c));
+ state.characters=merged;
+ state.roster=state.characters.filter(c=>c.owned).map(c=>c.name).concat(oldRoster.filter(name=>!state.characters.some(c=>c.name===name)));
+ state.catalogVersion=catalogVersion;save();
+}
+function renderCharacters(){ensureCharacters();const q=(document.getElementById("charSearch").value||"").trim().toLowerCase(),rarity=document.querySelector(".rarity-tab.active")?.dataset.rarity||"";const filtered=state.characters.filter(c=>(!rarity||c.rarity===rarity)&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>a.id-b.id||a.name.localeCompare(b.name,"ja"));const pages=Math.max(1,Math.ceil(filtered.length/24));charPage=Math.min(charPage,pages-1);const items=filtered.slice(charPage*24,charPage*24+24);const grid=document.getElementById("charGrid");grid.innerHTML="";items.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="char-tile"+(c.owned?" owned":"");b.title=c.owned?"所持中（クリックで未所持）":"未所持（クリックで所持）";b.innerHTML=`<div class="char-icon">${c.image?`<img src="${escapeHtml(c.image)}" alt="" style="width:100%;height:100%;object-fit:contain">`:''}</div><div class="char-name">${escapeHtml(c.name)}</div><div class="char-rarity">${escapeHtml(c.rarity)} · ${c.owned?"所持":"未所持"}</div>`;b.onclick=()=>{c.owned=!c.owned;state.roster=state.characters.filter(x=>x.owned).map(x=>x.name);save();renderCharacters();renderDetail()};grid.appendChild(b)});document.getElementById("ownedCount").textContent=`所持 ${state.characters.filter(c=>c.owned).length} / ${state.characters.length}`;document.getElementById("charPageLabel").textContent=`${charPage+1} / ${pages}`;document.getElementById("prevCharsBtn").disabled=charPage===0;document.getElementById("nextCharsBtn").disabled=charPage>=pages-1}
+function showView(viewId){
+ document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===viewId));
+ ["listView","settingsView","charactersView"].forEach(id=>document.getElementById(id).classList.toggle("hidden",id!==viewId));
+ document.getElementById("detailView").classList.toggle("hidden",viewId!=="listView");
+ if(viewId==="charactersView")renderCharacters();
+}
+document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
+document.getElementById("goRosterBtn").onclick=()=>showView("charactersView");
+document.getElementById("saveRosterBtn").onclick=()=>{
+ state.roster=document.getElementById("rosterText").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);ensureCharacters();state.characters.forEach(c=>c.owned=state.roster.includes(c.name));save();alert(`${state.roster.length}件のキャラクター名を登録しました。`);renderDetail();renderCharacters()
+};
+document.getElementById("charSearch").oninput=()=>{charPage=0;renderCharacters()};document.querySelectorAll(".rarity-tab").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".rarity-tab").forEach(x=>x.classList.toggle("active",x===btn));charPage=0;renderCharacters()});
+document.getElementById("prevCharsBtn").onclick=()=>{charPage=Math.max(0,charPage-1);renderCharacters()};document.getElementById("nextCharsBtn").onclick=()=>{charPage++;renderCharacters()};
+document.getElementById("selectPageBtn").onclick=()=>{ensureCharacters();const q=(document.getElementById("charSearch").value||"").trim().toLowerCase(),r=document.querySelector(".rarity-tab.active")?.dataset.rarity||"";const filtered=state.characters.filter(c=>(!r||c.rarity===r)&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>a.id-b.id);filtered.slice(charPage*24,charPage*24+24).forEach(c=>c.owned=true);state.roster=state.characters.filter(c=>c.owned).map(c=>c.name);save();renderCharacters();renderDetail()};
+document.getElementById("clearPageBtn").onclick=()=>{ensureCharacters();const q=(document.getElementById("charSearch").value||"").trim().toLowerCase(),r=document.querySelector(".rarity-tab.active")?.dataset.rarity||"";const filtered=state.characters.filter(c=>(!r||c.rarity===r)&&(!q||c.name.toLowerCase().includes(q))).sort((a,b)=>a.id-b.id);filtered.slice(charPage*24,charPage*24+24).forEach(c=>c.owned=false);state.roster=state.characters.filter(c=>c.owned).map(c=>c.name);save();renderCharacters();renderDetail()};
+
+function exportSave(){
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nyanko-random-save.json";a.click();URL.revokeObjectURL(url)
+}
+document.getElementById("exportBtn").onclick=exportSave;
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;try{const s=JSON.parse(await file.text());if(!s||!s.stages||!Array.isArray(s.roster))throw new Error();state=Object.assign(defaultState(),s);save();document.getElementById("rosterText").value=state.roster.join("\n");selectedId=currentStageId()||48;renderList();renderDetail();alert("セーブデータを読み込みました。")}catch(err){alert("読み込めないファイルです。")}e.target.value=""
+};
+document.getElementById("resetBtn").onclick=()=>{if(!confirm("ステージ進行・👑集計・抽選結果をリセットします。よろしいですか？"))return;const roster=state.roster;state=defaultState();state.roster=roster;save();selectedId=1;renderList();renderDetail()};
+document.getElementById("rosterText").value=state.roster.join("\n");
+ensureCharacters();
+selectedId=currentStageId()||48;renderList();renderDetail();
+</script>
+</body>
+</html>
