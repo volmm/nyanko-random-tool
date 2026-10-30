@@ -1161,8 +1161,10 @@ function ensureCharacters(){
  const isCurrentCatalog=state.catalogVersion===catalogVersion;
  // On the first update, clear the old EX ownership data. After that, preserve
  // EX ownership normally so clicking a tile does not get reset on re-render.
- const byName=new Map(previous.filter(c=>!clearedRarities.has(c.rarity)&&(c.rarity!=="EX"||isCurrentCatalog)).map(c=>[c.name,c]));
- const oldRoster=Array.isArray(state.roster)?state.roster.filter(name=>!previous.some(c=>c.name===name&&clearedRarities.has(c.rarity)) && (isCurrentCatalog||!previous.some(c=>c.name===name&&c.rarity==="EX"))):[];
+ // Reset the four requested rarities only once, when migrating from an older catalog.
+ // After this catalog version is saved, keep ownership changes on every render.
+ const byName=new Map(previous.filter(c=>(isCurrentCatalog||!clearedRarities.has(c.rarity))&&(c.rarity!=="EX"||isCurrentCatalog)).map(c=>[c.name,c]));
+ const oldRoster=Array.isArray(state.roster)?state.roster.filter(name=>(isCurrentCatalog||!previous.some(c=>c.name===name&&clearedRarities.has(c.rarity))) && (isCurrentCatalog||!previous.some(c=>c.name===name&&c.rarity==="EX"))):[];
  const catalog=parseCharacterLines(INITIAL_CHAR_TEXT);
  const catalogNames=new Set(catalog.map(c=>c.name));
  const merged=catalog.map(c=>{const old=byName.get(c.name);return {...c,owned:old?!!old.owned:oldRoster.includes(c.name),image:old?.image||""}});
