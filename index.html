@@ -604,8 +604,11 @@ function ensureCharacters(){
  // Always merge the built-in catalog with saved data so a save/import from an older
  // version cannot accidentally hide newly registered characters (including Basic).
  const previous=Array.isArray(state.characters)?state.characters:[];
- const byName=new Map(previous.filter(c=>c.rarity!=="EX").map(c=>[c.name,c]));
- const oldRoster=Array.isArray(state.roster)?state.roster.filter(name=>!previous.some(c=>c.name===name&&c.rarity==="EX")):[];
+ const isCurrentCatalog=state.catalogVersion===catalogVersion;
+ // On the first update, clear the old EX ownership data. After that, preserve
+ // EX ownership normally so clicking a tile does not get reset on re-render.
+ const byName=new Map(previous.filter(c=>c.rarity!=="EX"||isCurrentCatalog).map(c=>[c.name,c]));
+ const oldRoster=Array.isArray(state.roster)?(isCurrentCatalog?[...state.roster]:state.roster.filter(name=>!previous.some(c=>c.name===name&&c.rarity==="EX"))):[];
  const catalog=parseCharacterLines(INITIAL_CHAR_TEXT);
  const catalogNames=new Set(catalog.map(c=>c.name));
  const merged=catalog.map(c=>{const old=byName.get(c.name);return {...c,owned:old?!!old.owned:oldRoster.includes(c.name),image:old?.image||""}});
