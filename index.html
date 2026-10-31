@@ -1105,11 +1105,11 @@ function renderDetail(){
  document.getElementById("nextCost").textContent=st.cleared?"—":`${cost(id,st.attempt)}個`;
  document.getElementById("detailGlobal").textContent=`${state.globalSpent||0}個`;
  document.getElementById("rosterWarning").classList.toggle("hidden",state.roster.length>0);
- const nextCost=st.cleared?0:cost(id,st.attempt);
+ const nextCost=cost(id,st.attempt);
  const limitReached=Number(state.crownLimit)===196 && (state.globalSpent||0)+nextCost>196;
- document.getElementById("randomBtn").disabled=st.cleared||limitReached;
- document.getElementById("loseBtn").disabled=st.cleared||limitReached;
- document.getElementById("clearBtn").disabled=st.cleared||limitReached;
+ document.getElementById("randomBtn").disabled=limitReached;
+ document.getElementById("loseBtn").disabled=limitReached;
+ document.getElementById("clearBtn").disabled=limitReached;
  let limitNotice=document.getElementById("limitNotice");
  if(limitNotice) limitNotice.classList.toggle("hidden",!limitReached);
  document.getElementById("clearedNotice").classList.toggle("hidden",!st.cleared);
@@ -1126,7 +1126,7 @@ function renderDraw(draw){
  changed.forEach(n=>{const d=document.createElement("div");d.className="assignment";d.textContent=`${n}枠目 → ${draw.assignments[n]}`;a.appendChild(d)})
 }
 document.getElementById("randomBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  if(!state.roster.length){alert("所持キャラクターが登録されていません。キャラクター図鑑で所持キャラクターを選択してください。");showView("charactersView");return}
  const uniqueRoster=[...new Set(state.roster)];
@@ -1139,16 +1139,22 @@ document.getElementById("randomBtn").onclick=()=>{
  st.draw={count,assignments};save();renderDetail()
 };
 document.getElementById("loseBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
- if(!confirm("この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。"))return;
+ const message=st.cleared
+  ? "クリア済みステージに敗北を追加記録しますか？\n今回の必要👑数を累計に加算し、次回の変更枠数を調整します。"
+  : "この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。";
+ if(!confirm(message))return;
  const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.attempt++;st.draw=null;save();renderList();renderDetail()
 };
 document.getElementById("clearBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
- if(!confirm("このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算します。"))return;
- const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.cleared=true;st.draw=null;save();const next=currentStageId();selectedId=next||id;renderList();renderDetail()
+ const message=st.cleared
+  ? "このクリア済みステージの勝利を追加記録しますか？\n今回の必要👑数を累計に加算し、次回の変更枠数を調整します。"
+  : "このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算します。";
+ if(!confirm(message))return;
+ const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.cleared=true;st.attempt++;st.draw=null;save();renderList();renderDetail()
 };
 let charPage=0;
 function parseCharacterLines(text){return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split("\t").map(x=>x.trim()).filter(Boolean);if(parts.length<3)return null;const m=parts[0].match(/^(\d+)(?:[-_](\d+))?$/);if(!m)return null;return {id:Number(m[1]),form:m[2]||"",rarity:parts[1],name:parts.slice(2).join(" ").trim(),owned:false,image:""}}).filter(c=>c&&c.name)}
