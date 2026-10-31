@@ -17,7 +17,7 @@ h2{font-size:1.08rem;margin:0 0 12px}h3{font-size:.95rem;margin:16px 0 8px}.mute
 .stage-list{display:grid;gap:8px}.stage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;background:#fff;color:var(--ink);width:100%}.stage-row.current{border:2px solid var(--accent);background:#faf8ff}.stage-row .name{font-weight:750}.stage-row .detail{font-size:.78rem;color:var(--muted);margin-top:3px}.stage-row .right{text-align:right;white-space:nowrap;font-size:.82rem}
 .hidden{display:none!important}.big{font-size:1.3rem;font-weight:800;margin:4px 0 14px}.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{background:#f8f7fc;border-radius:12px;padding:12px}.stat .label{font-size:.78rem;color:var(--muted)}.stat .value{font-size:1.08rem;font-weight:800;margin-top:3px}
 .slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.slot{border:1px solid var(--line);border-radius:10px;padding:10px 4px;text-align:center;background:#faf9fc;min-height:72px}.slot.changed{background:#fff0cc;border-color:#d89a17}.slot .num{font-size:.78rem;color:var(--muted)}.slot .symbol{font-size:1.2rem;font-weight:900}.slot .char{font-size:.72rem;overflow-wrap:anywhere;margin-top:4px}
-.assignments{display:grid;gap:6px}.assignment{padding:9px 10px;background:#f8f7fc;border-radius:9px;font-size:.9rem}
+.assignments{display:grid;gap:6px}.assignment{padding:9px 10px;background:#f8f7fc;border-radius:9px;font-size:.9rem}.instruction-heading{display:flex;align-items:center;gap:8px}.instruction-heading h3{margin:16px 0 8px}.instruction-share{margin-top:8px;padding:4px 9px;border-radius:8px;background:#f1eff6;color:#686579;font-size:.72rem;font-weight:500}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:100px}
 .notice{background:#fff5d9;border:1px solid #f0d58c;padding:12px;border-radius:12px;font-size:.88rem}.success{background:#e8f5ec;border-color:#b8dfc2}
 textarea,input,select{font:inherit;width:100%;padding:10px;border:1px solid #cfcbdc;border-radius:10px;background:white;color:var(--ink)}textarea{min-height:140px}.formrow{display:grid;gap:8px;margin:10px 0}.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -64,7 +64,7 @@ footer{max-width:900px;margin:auto;padding:0 14px 24px;color:var(--muted);font-s
 <div id="drawArea" class="hidden">
 <h3>変更枠</h3><div class="muted" id="changedCount" style="margin-bottom:8px"></div>
 <div class="slots" id="slotGrid"></div>
-<h3>変更指示</h3><div class="assignments" id="assignments"></div>
+<div class="instruction-heading"><h3>変更指示</h3><button type="button" class="instruction-share" id="shareInstructionsBtn" aria-label="変更指示を共有">共有</button></div><div class="assignments" id="assignments"></div>
 </div>
 <div class="notice success hidden" id="clearedNotice" style="margin-top:12px">このステージはクリア済みです。</div>
 </div>
@@ -1121,6 +1121,16 @@ function renderDetail(){
  document.getElementById("drawArea").classList.toggle("hidden",!st.draw);
  if(st.draw)renderDraw(st.draw);
 }
+async function shareInstructions(){
+ const text=document.getElementById("assignments").innerText.trim();
+ if(!text){alert("共有する変更指示がありません。");return}
+ try{
+  if(navigator.share){await navigator.share({text});}
+  else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);alert("変更指示だけをコピーしました。");}
+  else{window.prompt("変更指示をコピーしてください。",text);}
+ }catch(error){if(error.name!=="AbortError")alert("共有できませんでした。もう一度お試しください。");}
+}
+document.getElementById("shareInstructionsBtn").onclick=shareInstructions;
 function renderDraw(draw){
  document.getElementById("changedCount").textContent=`変更枠数：${draw.count}枠`;
  const grid=document.getElementById("slotGrid");grid.innerHTML="";
