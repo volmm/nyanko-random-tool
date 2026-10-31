@@ -1098,18 +1098,23 @@ function shareToX(kind){
 document.getElementById("shareFinishBtn").onclick=()=>shareToX("finish");
 document.getElementById("shareLimitBtn").onclick=()=>shareToX("limit");
 function renderDetail(){
- const id=selectedId;if(!id){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden");return}
- const st=ensureEnemy(id);document.getElementById("detailEmpty").classList.add("hidden");document.getElementById("detailContent").classList.remove("hidden");
+ // 表示対象が未設定の場合でも、次の未クリアステージ（全クリア後はLEVEL 48）を表示対象にする。
+ const id=selectedId || currentStageId() || 48;
+ selectedId=id;
+ const st=ensureEnemy(id);
+ document.getElementById("detailEmpty").classList.add("hidden");
+ document.getElementById("detailContent").classList.remove("hidden");
  document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
  document.getElementById("stageTitle").textContent=titleFor(id,st);
- document.getElementById("nextCost").textContent=`${cost(id,st.attempt)}個`;
+ // 必要冠数は選択中ステージの次回挑戦コストを必ず数値で表示する。
+ const nextCost=Number(cost(id,st.attempt));
+ document.getElementById("nextCost").textContent=Number.isFinite(nextCost)?`${nextCost}個`:"計算エラー";
  document.getElementById("detailGlobal").textContent=`${state.globalSpent||0}個`;
  document.getElementById("rosterWarning").classList.toggle("hidden",state.roster.length>0);
- const nextCost=st.cleared?0:cost(id,st.attempt);
  const limitReached=Number(state.crownLimit)===196 && (state.globalSpent||0)+nextCost>196;
- document.getElementById("randomBtn").disabled=st.cleared||limitReached;
- document.getElementById("loseBtn").disabled=st.cleared||limitReached;
- document.getElementById("clearBtn").disabled=st.cleared||limitReached;
+ document.getElementById("randomBtn").disabled=limitReached;
+ document.getElementById("loseBtn").disabled=limitReached;
+ document.getElementById("clearBtn").disabled=limitReached;
  let limitNotice=document.getElementById("limitNotice");
  if(limitNotice) limitNotice.classList.toggle("hidden",!limitReached);
  document.getElementById("clearedNotice").classList.toggle("hidden",!st.cleared);
@@ -1126,7 +1131,7 @@ function renderDraw(draw){
  changed.forEach(n=>{const d=document.createElement("div");d.className="assignment";d.textContent=`${n}枠目 → ${draw.assignments[n]}`;a.appendChild(d)})
 }
 document.getElementById("randomBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  if(!state.roster.length){alert("所持キャラクターが登録されていません。キャラクター図鑑で所持キャラクターを選択してください。");showView("charactersView");return}
  const uniqueRoster=[...new Set(state.roster)];
@@ -1138,17 +1143,49 @@ document.getElementById("randomBtn").onclick=()=>{
  const assignments={};chosen.forEach((n,i)=>assignments[n]=pool[i]);
  st.draw={count,assignments};save();renderDetail()
 };
+// 敗北・勝利は同じステージ単位の挑戦記録処理を共有する。
+// 冠消費と挑戦回数（次回の変更枠抽選に使う）は選択中ステージだけに反映し、
+// 次の未クリアステージの attempt は変更しない。
+function recordStageAttempt(id, result){
+ const st=stageState(id);
+ const spent=cost(id,st.attempt);
+ st.spent=(st.spent||0)+spent;
+ state.globalSpent=(state.globalSpent||0)+spent;
+ st.attempt++;
+ st.draw=null;
+ if(result==="win") st.cleared=true;
+ // 勝利時は従来どおり次の未クリアステージへ表示を移す。
+ // 次ステージの attempt / draw / crown cost は変更しない。
+ if(result==="win"){
+  // 勝利したステージをクリア扱いにした後、次の未クリアステージへ選択を移す。
+  const nextId=currentStageId();
+  selectedId=nextId!==null?nextId:48;
+  state.current=selectedId;
+ }else{
+  selectedId=id;
+ }
+ save();
+ renderList();
+ renderDetail();
+}
 document.getElementById("loseBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
- if(!confirm("この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。"))return;
- const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.attempt++;st.draw=null;save();renderList();renderDetail()
+ const message=st.cleared
+  ? "クリア済みステージに敗北を追加記録しますか？\n今回の必要👑数を累計に加算し、このステージの次回変更枠数を調整します。"
+  : "この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。";
+ if(!confirm(message))return;
+ recordStageAttempt(id,"lose");
 };
+
 document.getElementById("clearBtn").onclick=()=>{
- const id=selectedId,st=stageState(id);if(st.cleared)return;
+ const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
- if(!confirm("このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算します。"))return;
- const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.cleared=true;st.draw=null;save();const next=currentStageId();selectedId=next||id;renderList();renderDetail()
+ const message=st.cleared
+  ? "このクリア済みステージの勝利を追加記録しますか？\n今回の必要👑数を累計に加算し、このステージの次回変更枠数を調整します。"
+  : "このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算し、このステージの次回変更枠数を調整します。次のステージの挑戦回数には影響しません。";
+ if(!confirm(message))return;
+ recordStageAttempt(id,"win");
 };
 let charPage=0;
 function parseCharacterLines(text){return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split("\t").map(x=>x.trim()).filter(Boolean);if(parts.length<3)return null;const m=parts[0].match(/^(\d+)(?:[-_](\d+))?$/);if(!m)return null;return {id:Number(m[1]),form:m[2]||"",rarity:parts[1],name:parts.slice(2).join(" ").trim(),owned:false,image:""}}).filter(c=>c&&c.name)}
