@@ -1102,7 +1102,7 @@ function renderDetail(){
  const st=ensureEnemy(id);document.getElementById("detailEmpty").classList.add("hidden");document.getElementById("detailContent").classList.remove("hidden");
  document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
  document.getElementById("stageTitle").textContent=titleFor(id,st);
- document.getElementById("nextCost").textContent=st.cleared?"—":`${cost(id,st.attempt)}個`;
+ document.getElementById("nextCost").textContent=`${cost(id,st.attempt)}個`;
  document.getElementById("detailGlobal").textContent=`${state.globalSpent||0}個`;
  document.getElementById("rosterWarning").classList.toggle("hidden",state.roster.length>0);
  const nextCost=st.cleared?0:cost(id,st.attempt);
