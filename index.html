@@ -1138,23 +1138,47 @@ document.getElementById("randomBtn").onclick=()=>{
  const assignments={};chosen.forEach((n,i)=>assignments[n]=pool[i]);
  st.draw={count,assignments};save();renderDetail()
 };
+// 敗北・勝利は同じステージ単位の挑戦記録処理を共有する。
+// 冠消費と挑戦回数（次回の変更枠抽選に使う）は選択中ステージだけに反映し、
+// 次の未クリアステージの attempt は変更しない。
+function recordStageAttempt(id, result){
+ const st=stageState(id);
+ const spent=cost(id,st.attempt);
+ st.spent=(st.spent||0)+spent;
+ state.globalSpent=(state.globalSpent||0)+spent;
+ st.attempt++;
+ st.draw=null;
+ if(result==="win") st.cleared=true;
+ // 勝利時は従来どおり次の未クリアステージへ表示を移す。
+ // 次ステージの attempt / draw / crown cost は変更しない。
+ if(result==="win"){
+  const nextId=currentStageId();
+  selectedId=nextId!==null?nextId:48;
+ }else{
+  selectedId=id;
+ }
+ save();
+ renderList();
+ renderDetail();
+}
 document.getElementById("loseBtn").onclick=()=>{
  const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  const message=st.cleared
-  ? "クリア済みステージに敗北を追加記録しますか？\n今回の必要👑数を累計に加算し、次回の変更枠数を調整します。"
+  ? "クリア済みステージに敗北を追加記録しますか？\n今回の必要👑数を累計に加算し、このステージの次回変更枠数を調整します。"
   : "この挑戦を敗北として記録しますか？\n今回の必要👑数を累計に加算し、次の挑戦に進みます。";
  if(!confirm(message))return;
- const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.attempt++;st.draw=null;save();renderList();renderDetail()
+ recordStageAttempt(id,"lose");
 };
+
 document.getElementById("clearBtn").onclick=()=>{
  const id=selectedId,st=stageState(id);
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  const message=st.cleared
-  ? "このクリア済みステージの勝利を追加記録しますか？\n今回の必要👑数を累計に加算し、次回の変更枠数を調整します。"
-  : "このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算します。";
+  ? "このクリア済みステージの勝利を追加記録しますか？\n今回の必要👑数を累計に加算し、このステージの次回変更枠数を調整します。"
+  : "このステージを勝利として記録しますか？\n今回の必要👑数を全ステージ累計に加算し、このステージの次回変更枠数を調整します。次のステージの挑戦回数には影響しません。";
  if(!confirm(message))return;
- const spent=cost(id,st.attempt);st.spent=(st.spent||0)+spent;state.globalSpent=(state.globalSpent||0)+spent;st.cleared=true;st.attempt++;st.draw=null;save();renderList();renderDetail()
+ recordStageAttempt(id,"win");
 };
 let charPage=0;
 function parseCharacterLines(text){return text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{const parts=line.split("\t").map(x=>x.trim()).filter(Boolean);if(parts.length<3)return null;const m=parts[0].match(/^(\d+)(?:[-_](\d+))?$/);if(!m)return null;return {id:Number(m[1]),form:m[2]||"",rarity:parts[1],name:parts.slice(2).join(" ").trim(),owned:false,image:""}}).filter(c=>c&&c.name)}
