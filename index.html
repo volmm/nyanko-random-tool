@@ -1078,7 +1078,7 @@ function renderList(){
  const list=document.getElementById("stageList");list.innerHTML="";
  const ids=[];if(cur!==null)ids.push(cur);for(let i=1;i<=48;i++)if(stageState(i).cleared)ids.push(i);
  const unique=[...new Set(ids)].sort((a,b)=>a-b);
- unique.forEach(id=>{const st=ensureEnemy(id);const b=document.createElement("button");b.className="stage-row"+(id===cur?" current":"");const displayTitle=(state.mode==="hard"&&!st.draw)?getStageLabel(id):titleFor(id,st);b.innerHTML=`<div><div class="name">${escapeHtml(displayTitle)}</div><div class="detail">${st.cleared?`クリア済み・${st.attempt}回挑戦`:`挑戦中・${st.attempt}回目`}</div></div><div class="right">${st.cleared?"クリア":`次の👑 ${cost(id,st.attempt)}個`}</div>`;b.onclick=()=>{selectedId=id;renderDetail();document.querySelectorAll(".stage-row").forEach(x=>x.classList.remove("selected"))};list.appendChild(b)});
+ unique.forEach(id=>{const st=ensureEnemy(id);const b=document.createElement("button");b.className="stage-row"+(id===cur?" current":"");const displayTitle=(state.mode==="hard"&&!st.stageRevealed)?getStageLabel(id):titleFor(id,st);b.innerHTML=`<div><div class="name">${escapeHtml(displayTitle)}</div><div class="detail">${st.cleared?`クリア済み・${st.attempt}回挑戦`:`挑戦中・${st.attempt}回目`}</div></div><div class="right">${st.cleared?"クリア":`次の👑 ${cost(id,st.attempt)}個`}</div>`;b.onclick=()=>{selectedId=id;renderDetail();document.querySelectorAll(".stage-row").forEach(x=>x.classList.remove("selected"))};list.appendChild(b)});
  if(cur===null){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden")}
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -1106,7 +1106,7 @@ function renderDetail(){
  document.getElementById("detailContent").classList.remove("hidden");
  document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
  const stageTitleEl=document.getElementById("stageTitle");
- if(state.mode==="hard"&&!st.draw){
+ if(state.mode==="hard"&&!st.stageRevealed){
    const target=regularStages.find(x=>x.id===id);
    const candidates=target?.candidates||[];
    stageTitleEl.innerHTML=`${escapeHtml(getStageLabel(id))}<div class="target-stage-list">${candidates.map((name,i)=>`${i+1}. ${escapeHtml(name)}`).join("<br>")}</div>`;
@@ -1152,6 +1152,7 @@ document.getElementById("randomBtn").onclick=()=>{
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  if(!state.roster.length){alert("所持キャラクターが登録されていません。キャラクター図鑑で所持キャラクターを選択してください。");showView("charactersView");return}
  const uniqueRoster=[...new Set(state.roster)];
+ if(state.mode==="hard")st.stageRevealed=true;
  if(!st.draw){const count=Math.min(weighted(currentProb(st.attempt)),uniqueRoster.length);st.draw={count,assignments:{}}}
  const count=Math.min(st.draw.count,uniqueRoster.length),slots=Array.from({length:10},(_,i)=>i+1);
  for(let i=slots.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[slots[i],slots[j]]=[slots[j],slots[i]]}
