@@ -1082,15 +1082,26 @@ function renderList(){
  if(cur===null){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden")}
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+// 旧セーブデータには敗北回数の専用項目がないため、移行時は
+// 「記録済み結果数（attempt - 1）－クリア済みステージごとの勝利1回」を目安として補完する。
+// 今回以降の敗北は st.defeats に正確に保存する。
+function inferredDefeats(st){
+ const recorded=Math.max(0,(Number(st?.attempt)||1)-1);
+ return Math.max(0,recorded-(st?.cleared?1:0));
+}
+function totalDefeats(){
+ return Object.values(state.stages||{}).reduce((sum,st)=>sum+(Number.isFinite(Number(st?.defeats))?Math.max(0,Number(st.defeats)):inferredDefeats(st)),0);
+}
 function shareToX(kind){
  const mode=state.mode==="hard"?"ハードモード":"ノーマルモード";
  const siteUrl="https://volmm.github.io/nyanko-random-tool/";
+ const defeats=totalDefeats();
  let result="";
  if(kind==="finish"){
-  result=`${mode}、使用冠数は${state.globalSpent||0}個で真レジェクエを完走しました\n#にゃんこ大戦争 #真レジェクエ\n${siteUrl}`;
+  result=`${mode}、使用冠数は${state.globalSpent||0}個(${defeats}敗)で真レジェクエを完走しました\n#にゃんこ大戦争 #真レジェクエ\n${siteUrl}`;
  }else{
   const id=currentStageId()||48;
-  result=`${mode}、冠使用制限数196個で${id}ステージまで到達しました\n#にゃんこ大戦争 #真レジェクエ\n${siteUrl}`;
+  result=`${mode}、冠使用制限数196個(${defeats}敗)で${id}ステージまで到達しました\n#にゃんこ大戦争 #真レジェクエ\n${siteUrl}`;
  }
  const url="https://twitter.com/intent/tweet?text="+encodeURIComponent(result);
  window.open(url,"_blank","noopener,noreferrer");
@@ -1169,6 +1180,7 @@ function recordStageAttempt(id, result){
  const spent=cost(id,st.attempt);
  st.spent=(st.spent||0)+spent;
  state.globalSpent=(state.globalSpent||0)+spent;
+ if(result==="lose") st.defeats=(Number.isFinite(Number(st.defeats))?Math.max(0,Number(st.defeats)):inferredDefeats(st))+1;
  st.attempt++;
  st.draw=null;
  if(result==="win") st.cleared=true;
