@@ -53,7 +53,7 @@ footer{max-width:900px;margin:auto;padding:0 14px 24px;color:var(--muted);font-s
 <div id="detailEmpty"><h2>ステージを選択</h2><p class="muted">一覧から挑戦中のステージを選んでください。</p></div>
 <div id="detailContent" class="hidden">
 <div class="muted" id="stageStatus"></div>
-<div class="big" id="stageTitle"></div>
+<div class="big" id="stageTitle"></div><div id="stageCandidates" class="muted" style="margin:8px 0 14px;line-height:1.8"></div>
 <div class="statgrid">
 <div class="stat"><div class="label">次の挑戦に必要な👑</div><div class="value" id="nextCost"></div></div>
 <div class="stat"><div class="label">全ステージの累計使用👑数</div><div class="value" id="detailGlobal"></div></div>
@@ -1076,9 +1076,8 @@ function ensureEnemy(id){
 function renderList(){
  const cur=currentStageId();state.current=cur||48;document.getElementById("finishNotice").classList.toggle("hidden",cur!==null);document.getElementById("modeBadge").textContent=`${state.mode==="hard"?"ハードモード":"ノーマルモード"} / 👑使用制限：${Number(state.crownLimit)===196?"196個":"無制限"}`;document.getElementById("globalSpent").textContent=`👑 全ステージ累計：${state.globalSpent||0}個` + (Number(state.crownLimit)===196?` / 制限196個（残り${Math.max(0,196-(state.globalSpent||0))}個）`:" / 制限なし");
  const list=document.getElementById("stageList");list.innerHTML="";
- const ids=[];if(cur!==null)ids.push(cur);for(let i=1;i<=48;i++)if(stageState(i).cleared)ids.push(i);
- const unique=[...new Set(ids)].sort((a,b)=>a===cur?-1:b===cur?1:a-b);
- unique.forEach(id=>{const st=ensureEnemy(id);const b=document.createElement("button");b.className="stage-row"+(id===cur?" current":"");b.innerHTML=`<div><div class="name">${escapeHtml(titleFor(id,st))}</div><div class="detail">${st.cleared?`クリア済み・${st.attempt}回挑戦`:`挑戦中・${st.attempt}回目`}</div></div><div class="right">${st.cleared?"クリア":`次の👑 ${cost(id,st.attempt)}個`}</div>`;b.onclick=()=>{selectedId=id;renderDetail();document.querySelectorAll(".stage-row").forEach(x=>x.classList.remove("selected"))};list.appendChild(b)});
+ const ids=Array.from({length:48},(_,i)=>i+1);
+ ids.forEach(id=>{const st=stageState(id);const b=document.createElement("button");b.className="stage-row"+(id===cur?" current":"");const isHiddenStage=(id===cur&&!st.draw&&!st.cleared);b.innerHTML=`<div><div class="name">${isHiddenStage?getStageLabel(id):escapeHtml(titleFor(id,st))}</div><div class="detail">${st.cleared?`クリア済み・${Math.max(1,st.attempt-1)}回挑戦`:id===cur?`挑戦中・${st.attempt}回目`:"未到達"}</div></div><div class="right">${st.cleared?"クリア":`次の👑 ${cost(id,st.attempt)}個`}</div>`;b.onclick=()=>{selectedId=id;renderDetail();document.querySelectorAll(".stage-row").forEach(x=>x.classList.remove("selected"))};list.appendChild(b)});
  if(cur===null){document.getElementById("detailEmpty").classList.remove("hidden");document.getElementById("detailContent").classList.add("hidden")}
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -1105,7 +1104,13 @@ function renderDetail(){
  document.getElementById("detailEmpty").classList.add("hidden");
  document.getElementById("detailContent").classList.remove("hidden");
  document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
- document.getElementById("stageTitle").textContent=titleFor(id,st);
+ const isUnrevealed=(id===currentStageId()&&!st.draw&&!st.cleared);
+ document.getElementById("stageTitle").textContent=isUnrevealed?"ステージ名はランダム後に表示":titleFor(id,st);
+ const stageGroup=regularStages.find(x=>x.id===id);
+ const candidates=stageGroup?.candidates||[];
+ document.getElementById("stageCandidates").innerHTML=candidates.length
+  ? `<strong>このLEVELの対象ステージ（${candidates.length}件）</strong><br>${candidates.map(escapeHtml).join("<br>")}`
+  : "";
  // 必要冠数は選択中ステージの次回挑戦コストを必ず数値で表示する。
  const nextCost=Number(cost(id,st.attempt));
  document.getElementById("nextCost").textContent=Number.isFinite(nextCost)?`${nextCost}個`:"計算エラー";
@@ -1145,6 +1150,8 @@ document.getElementById("randomBtn").onclick=()=>{
  if(Number(state.crownLimit)===196 && (state.globalSpent||0)+cost(id,st.attempt)>196){alert("👑使用制限の196個を超えるため、これ以上挑戦できません。");return}
  if(!state.roster.length){alert("所持キャラクターが登録されていません。キャラクター図鑑で所持キャラクターを選択してください。");showView("charactersView");return}
  const uniqueRoster=[...new Set(state.roster)];
+ // ステージ名は内部で保持し、ランダム実行時に初めて画面へ表示する。
+ if(!st.enemy){st.enemy=chooseUniqueEnemy(id);save();}
  if(!st.draw){const count=Math.min(weighted(currentProb(st.attempt)),uniqueRoster.length);st.draw={count,assignments:{}}}
  const count=Math.min(st.draw.count,uniqueRoster.length),slots=Array.from({length:10},(_,i)=>i+1);
  for(let i=slots.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[slots[i],slots[j]]=[slots[j],slots[i]]}
@@ -1170,6 +1177,7 @@ function recordStageAttempt(id, result){
   // 勝利したステージをクリア扱いにした後、次の未クリアステージへ選択を移す。
   const nextId=currentStageId();
   selectedId=nextId!==null?nextId:48;
+  ensureEnemy(selectedId); // 次ステージを内部決定（画面には名前を出さない）
   state.current=selectedId;
  }else{
   selectedId=id;
