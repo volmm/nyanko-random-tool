@@ -15,7 +15,7 @@ nav{display:flex;gap:8px;flex-wrap:wrap}.tab,button{border:0;border-radius:12px;
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 2px 8px #211a3908}
 h2{font-size:1.08rem;margin:0 0 12px}h3{font-size:.95rem;margin:16px 0 8px}.muted{color:var(--muted);font-size:.86rem}.summary{display:flex;gap:8px;flex-wrap:wrap}.pill{background:var(--accent2);padding:7px 10px;border-radius:10px;font-weight:700;font-size:.9rem}
 .stage-list{display:grid;gap:8px}.stage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;background:#fff;color:var(--ink);width:100%}.stage-row.current{border:2px solid var(--accent);background:#faf8ff}.stage-row .name{font-weight:750}.stage-row .detail{font-size:.78rem;color:var(--muted);margin-top:3px}.stage-row .right{text-align:right;white-space:nowrap;font-size:.82rem}
-.hidden{display:none!important}.big{font-size:1.3rem;font-weight:800;margin:4px 0 14px}.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{background:#f8f7fc;border-radius:12px;padding:12px}.stat .label{font-size:.78rem;color:var(--muted)}.stat .value{font-size:1.08rem;font-weight:800;margin-top:3px}
+.hidden{display:none!important}.big{font-size:1.3rem;font-weight:800;margin:4px 0 14px}.target-stage-list{font-size:.95rem;font-weight:600;line-height:1.55;margin-top:8px}.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{background:#f8f7fc;border-radius:12px;padding:12px}.stat .label{font-size:.78rem;color:var(--muted)}.stat .value{font-size:1.08rem;font-weight:800;margin-top:3px}
 .slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.slot{border:1px solid var(--line);border-radius:10px;padding:10px 4px;text-align:center;background:#faf9fc;min-height:72px}.slot.changed{background:#fff0cc;border-color:#d89a17}.slot .num{font-size:.78rem;color:var(--muted)}.slot .symbol{font-size:1.2rem;font-weight:900}.slot .char{font-size:.72rem;overflow-wrap:anywhere;margin-top:4px}
 .assignments{display:grid;gap:6px}.assignment{padding:9px 10px;background:#f8f7fc;border-radius:9px;font-size:.9rem}.instruction-heading{display:flex;align-items:center;gap:8px}.instruction-heading h3{margin:16px 0 8px}.instruction-share{margin-top:8px;padding:4px 9px;border-radius:8px;background:#f1eff6;color:#686579;font-size:.72rem;font-weight:500}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1;min-width:100px}
@@ -1105,7 +1105,14 @@ function renderDetail(){
  document.getElementById("detailEmpty").classList.add("hidden");
  document.getElementById("detailContent").classList.remove("hidden");
  document.getElementById("stageStatus").textContent=st.cleared?"クリア済み":`挑戦中・${st.attempt}回目`;
- document.getElementById("stageTitle").textContent=(state.mode==="hard"&&!st.draw)?getStageLabel(id):titleFor(id,st);
+ const stageTitleEl=document.getElementById("stageTitle");
+ if(state.mode==="hard"&&!st.draw){
+   const target=regularStages.find(x=>x.id===id);
+   const candidates=target?.candidates||[];
+   stageTitleEl.innerHTML=`${escapeHtml(getStageLabel(id))}<div class="target-stage-list">${candidates.map((name,i)=>`${i+1}. ${escapeHtml(name)}`).join("<br>")}</div>`;
+ }else{
+   stageTitleEl.textContent=titleFor(id,st);
+ }
  // 必要冠数は選択中ステージの次回挑戦コストを必ず数値で表示する。
  const nextCost=Number(cost(id,st.attempt));
  document.getElementById("nextCost").textContent=Number.isFinite(nextCost)?`${nextCost}個`:"計算エラー";
